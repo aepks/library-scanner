@@ -31,6 +31,7 @@ for isbn in args.isbns:
 		print("Uh-oh, got a non-200 return. Continuing to the next one. Response:")
 		print(json.dumps(r.json(), indent=2, sort_keys=True))
 		continue
+
 	try:
 		book = r.json()['items'][0]
 	except KeyError as e:
