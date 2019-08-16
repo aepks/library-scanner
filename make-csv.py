@@ -31,6 +31,8 @@ for isbn in args.isbns:
 	r = requests.get(
 		'https://www.googleapis.com/books/v1/volumes', params={
 			'q': 'isbn={}'.format(isbn),
+			'fields': 'items/volumeInfo/authors,items/volumeInfo/title,items/id',
+			'maxResults': 1,
 			'key': GOOGLE_API_KEY
 			})
 	if r.status_code == 403:
