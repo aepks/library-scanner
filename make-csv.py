@@ -49,6 +49,10 @@ for isbn in args.isbns:
 	except KeyError as e:
 		print("No results for {}!".format(isbn))
 		print(json.dumps(r.json(), indent=2, sort_keys=True))
+		writer.writerow({
+			'ISBN': isbn,
+			'Comment': comment
+			})
 		continue
 
 	try:
@@ -60,7 +64,7 @@ for isbn in args.isbns:
 			'Title': title,
 			'First Author': book['volumeInfo'].get('authors', [""])[0], # some books don't have authors listed :(
 			'Last Name': book['volumeInfo'].get('authors', [""])[0].split(" ")[-1], # doesn't take into account multi-word last names
-			'ISBN': int(isbn), # int() avoids quotes
+			'ISBN': isbn,
 			'Google Books ID': book['id'],
 			'Comment': comment
 			})
