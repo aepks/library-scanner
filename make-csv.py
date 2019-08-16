@@ -2,24 +2,25 @@ import argparse
 import requests
 import csv
 import json
+import logging
 
 GOOGLE_API_KEY = ''
 
 def dump_response(r):
-	print(json.dumps(r.json(), indent=2, sort_keys=True))
+	return logging.debug(json.dumps(r.json(), indent=2, sort_keys=True))
 
 def matches_isbn(isbn, volumeInfo):
 	if 'industryIdentifiers' not in volumeInfo:
-		print("     no identifiers for {}".format(isbn))
+		logging.debug("no identifiers for {}".format(isbn))
 		return False
 	for identifier in volumeInfo['industryIdentifiers']:
 		try:
 			if int(identifier['identifier']) == isbn:
 				return True
-			# print("id {} != isbn {}".format(identifier['identifier'], isbn))
+			# logging.debug("id {} != isbn {}".format(identifier['identifier'], isbn))
 		except ValueError as e:
 			pass # ignore non-numeric ISBNs, since our scanner doesn't generate them anyway
-			# print("Found a non-numeric identifier: {}".format(identifier['identifier']))
+			# logging.debug("Found a non-numeric identifier: {}".format(identifier['identifier']))
 	return False
 
 
@@ -27,10 +28,16 @@ def matches_isbn(isbn, volumeInfo):
 parser = argparse.ArgumentParser(description="Turn a list of ISBNs into a CSV")
 parser.add_argument("isbns", help="A file with an ISBN on each line", type=argparse.FileType('r'))
 parser.add_argument("output", help="A CSV file with the book details", type=argparse.FileType('w'), default='-')
+parser.add_argument('-v', '--verbose', action='count', default=0)
 args = parser.parse_args()
 
+logging.basicConfig(level={
+	0: logging.WARNING,
+	1: logging.INFO,
+	2: logging.DEBUG}.get(args.verbose, 2))
+
 writer = csv.DictWriter(args.output,
-	fieldnames=['Google Books ID', 'ISBN', 'Last Name', 'First Author', 'Title', 'Comment'],
+	fieldnames=['Google Books ID', 'ISBN', 'Last Name', 'First Author', 'Title', 'Comment', 'Needs Manual Review?'],
 	restval="")
 writer.writeheader()
 
@@ -41,12 +48,11 @@ for isbn in args.isbns:
 	try:
 		isbn = int(isbn)
 	except ValueError:
-		print("Found comment: {}".format(isbn))
+		logging.debug("Found comment: {}".format(isbn))
 		comment = isbn
 		continue
 
-
-	print("Searching for {}".format(isbn))
+	logging.info("Searching for {}".format(isbn))
 	r = requests.get(
 		'https://www.googleapis.com/books/v1/volumes', params={
 			'q': 'isbn:{}'.format(isbn),
@@ -55,28 +61,32 @@ for isbn in args.isbns:
 			'key': GOOGLE_API_KEY
 			})
 	if r.status_code == 403:
-		print("Oop, we might be rate-limited. Stopping. Response:")
+		logging.critical("Oop, we might be rate-limited. Stopping.")
 		dump_response(r)
 		exit()
 	if r.status_code != 200:
-		print("Uh-oh, got a non-200 return. Continuing to the next one. Response:")
+		logging.warning("Uh-oh, got a non-200 return. Continuing to the next one. Response:")
 		dump_response(r)
 		continue
+
+	csv_row = {
+		'ISBN': isbn,
+		'Comment': comment,
+		'Needs Manual Review?': "No",
+	}
 
 	try:
 		book = r.json()['items'][0]
 	except KeyError as e:
-		print("No results for {}!".format(isbn))
+		logging.warning("No results for {}!".format(isbn))
 		dump_response(r)
-		writer.writerow({
-			'ISBN': isbn,
-			'Comment': comment
-			})
+		csv_row['Needs Manual Review?'] = "Yes"
+		writer.writerow(csv_row)
 		continue
 
 	try:
 		if not matches_isbn(isbn, book['volumeInfo']):
-			print("Matching ISBN not found for {}!".format(isbn))
+			logging.warning("Matching ISBN not found for {}!".format(isbn))
 			writer.writerow({
 				'ISBN': isbn,
 				'Comment': comment
@@ -96,5 +106,5 @@ for isbn in args.isbns:
 			'Comment': comment
 			})
 	except KeyError as e:
-		print("Couldn't find field {} in results for {}!".format(e, isbn))
-		print(json.dumps(book, indent=4, sort_keys=True))
+		logging.error("Couldn't find field {} in results for {}!".format(e, isbn))
+		logging.error(json.dumps(book, indent=4, sort_keys=True))
