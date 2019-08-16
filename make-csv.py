@@ -11,12 +11,22 @@ parser.add_argument("output", help="A CSV file with the book details", type=argp
 args = parser.parse_args()
 
 writer = csv.DictWriter(args.output,
-	fieldnames=['Google Books ID', 'ISBN', 'Last Name', 'First Author', 'Title'],
+	fieldnames=['Google Books ID', 'ISBN', 'Last Name', 'First Author', 'Title', 'Comment'],
 	restval="")
 writer.writeheader()
 
+comment = ""
+
 for isbn in args.isbns:
 	isbn = isbn.strip("\n")
+	try:
+		isbn = int(isbn)
+	except ValueError:
+		print("Found comment: {}".format(isbn))
+		comment = isbn
+		continue
+
+
 	print("Searching for {}".format(isbn))
 	r = requests.get(
 		'https://www.googleapis.com/books/v1/volumes', params={
@@ -49,7 +59,8 @@ for isbn in args.isbns:
 			'First Author': book['volumeInfo'].get('authors', [""])[0], # some books don't have authors listed :(
 			'Last Name': book['volumeInfo'].get('authors', [""])[0].split(" ")[-1], # doesn't take into account multi-word last names
 			'ISBN': int(isbn), # int() avoids quotes
-			'Google Books ID': book['id']
+			'Google Books ID': book['id'],
+			'Comment': comment
 			})
 	except KeyError as e:
 		print("Couldn't find field {} in results for {}!".format(e, isbn))
