@@ -28,13 +28,16 @@ def matches_isbn(isbn, volumeInfo):
 parser = argparse.ArgumentParser(description="Turn a list of ISBNs into a CSV")
 parser.add_argument("isbns", help="A file with an ISBN on each line", type=argparse.FileType('r'))
 parser.add_argument("output", help="A CSV file with the book details", type=argparse.FileType('w'), default='-')
-parser.add_argument('-v', '--verbose', action='count', default=0)
+parser.add_argument('-v', '--verbose', action='count', help="Verbose output (try -v, -vv)", default=0)
+parser.add_argument('-q', '--quiet', action='count', help="Quiet output (try -q, -qq)", default=0)
 args = parser.parse_args()
 
 logging.basicConfig(level={
-	0: logging.WARNING,
-	1: logging.INFO,
-	2: logging.DEBUG}.get(args.verbose, 2))
+	-2: logging.CRITICAL,
+	-1: logging.ERROR,
+	 0: logging.WARNING,
+	 1: logging.INFO,
+	 2: logging.DEBUG}.get(args.verbose - args.quiet, 0))
 
 writer = csv.DictWriter(args.output,
 	fieldnames=['Google Books ID', 'ISBN', 'Last Name', 'First Author', 'Title', 'Comment', 'Error?'],
