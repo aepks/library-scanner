@@ -37,7 +37,7 @@ logging.basicConfig(level={
 	2: logging.DEBUG}.get(args.verbose, 2))
 
 writer = csv.DictWriter(args.output,
-	fieldnames=['Google Books ID', 'ISBN', 'Last Name', 'First Author', 'Title', 'Comment', 'Needs Manual Review?'],
+	fieldnames=['Google Books ID', 'ISBN', 'Last Name', 'First Author', 'Title', 'Comment', 'Error?'],
 	restval="")
 writer.writeheader()
 
@@ -72,7 +72,6 @@ for isbn in args.isbns:
 	csv_row = {
 		'ISBN': isbn,
 		'Comment': comment,
-		'Needs Manual Review?': "No",
 	}
 
 	try:
@@ -80,31 +79,24 @@ for isbn in args.isbns:
 	except KeyError as e:
 		logging.warning("No results for {}!".format(isbn))
 		dump_response(r)
-		csv_row['Needs Manual Review?'] = "Yes"
+		csv_row['Error?'] = "No results found"
 		writer.writerow(csv_row)
 		continue
 
 	try:
 		if not matches_isbn(isbn, book['volumeInfo']):
 			logging.warning("Matching ISBN not found for {}!".format(isbn))
-			writer.writerow({
-				'ISBN': isbn,
-				'Comment': comment
-			})
+			csv_row['Error?'] = "ISBN mismatch"
 			dump_response(r)
-			continue
+		
 		if 'subtitle' in book['volumeInfo']:
-			title = "{title}: {subtitle}".format(**book['volumeInfo'])
+			csv_row['Title'] = "{title}: {subtitle}".format(**book['volumeInfo'])
 		else:
-			title = book['volumeInfo']['title']
-		writer.writerow({
-			'Title': title,
-			'First Author': book['volumeInfo'].get('authors', [""])[0], # some books don't have authors listed :(
-			'Last Name': book['volumeInfo'].get('authors', [""])[0].split(" ")[-1], # doesn't take into account multi-word last names
-			'ISBN': isbn,
-			'Google Books ID': book['id'],
-			'Comment': comment
-			})
+			csv_row['Title'] = book['volumeInfo']['title']
+		csv_row['First Author'] = book['volumeInfo'].get('authors', [""])[0], # some books don't have authors listed :(
+		csv_row['Last Name'] = book['volumeInfo'].get('authors', [""])[0].split(" ")[-1], # doesn't take into account multi-word last names
+		csv_row['Google Books ID'] = book['id'],
+		writer.writerow(csv_row)
 	except KeyError as e:
 		logging.error("Couldn't find field {} in results for {}!".format(e, isbn))
-		logging.error(json.dumps(book, indent=4, sort_keys=True))
+		logging.debug(json.dumps(book, indent=4, sort_keys=True))
