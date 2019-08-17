@@ -12,20 +12,22 @@ Run `python make-csv.py --help` for usage instructions.
 
 input.txt:
 ```
-shelf #1
-9780495802778
-9781938073373
-shelf #2
-9781604266139
-9780791463888
+Table 28 - Sherpa (6)
+9781305271760
+9781118976272
+Table 29 - Sherpa (8)
+9781119175483
+9780895828798
+9780077861971
 ```
 command: `python make-csv input.txt output.csv`
 
 output.csv:
-```
-Google Books ID,ISBN,Last Name,First Author,Title,Comment
-TY-jMQEACAAJ,9780495802778,Reviews,Cram101 Textbook Reviews,"Studyguide for the Modern Presidency, 6th Edition by James P. Pfiffner, Isbn 9780495802778",shelf #1
-7XO_NAEACAAJ,9781938073373,Petty,Audrey Petty,High Rise Stories: Voices from Chicago Public Housing,shelf #1
-E9c8AQAAIAAJ,9781604266139,,,"Choice: Publication of the Association of College and Research Libraries, a Division of the American Library Association",shelf #2
-j4c6zMDlQwMC,9780791463888,Paper,Jordan Paper,The Deities Are Many: A Polytheistic Theology,shelf #2
-```
+
+|Google Books ID|ISBN|Last Name|First Author|Title|Comment|Error?|
+|---|-----|---------|------------|-----|-------|------|
+|WFICswEACAAJ|9781305271760|Stewart|James Stewart|Calculus|Table 28 - Sherpa (6)||
+|NIWbCgAAQBAJ|9781118976272|Landy|Frank J. Landy|Work in the 21st Century, Binder Ready Version|Table 28 - Sherpa (6)||
+|Oh-RCgAAQBAJ|9781119175483|Callister|William D. Callister|Fundamentals of Materials Science and Engineering, Binder Ready Version|Table 29 - Sherpa (8)|ISBN mismatch|
+|iVwZywAACAAJ|9780895828798|Smith|David G. Smith|A Dissection Guide & Atlas to the Fetal Pig|Table 29 - Sherpa (8)||
+|eC_9sgEACAAJ|9780077861971|Myers|David Myers|Social Psychology|Table 29 - Sherpa (8)||
