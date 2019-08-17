@@ -93,9 +93,9 @@ for isbn in args.isbns:
 			csv_row['Title'] = "{title}: {subtitle}".format(**book['volumeInfo'])
 		else:
 			csv_row['Title'] = book['volumeInfo']['title']
-		csv_row['First Author'] = book['volumeInfo'].get('authors', [""])[0], # some books don't have authors listed :(
-		csv_row['Last Name'] = book['volumeInfo'].get('authors', [""])[0].split(" ")[-1], # doesn't take into account multi-word last names
-		csv_row['Google Books ID'] = book['id'],
+		csv_row['First Author'] = book['volumeInfo'].get('authors', [""])[0] # some books don't have authors listed :(
+		csv_row['Last Name'] = book['volumeInfo'].get('authors', [""])[0].split(" ")[-1] # doesn't take into account multi-word last names
+		csv_row['Google Books ID'] = book['id']
 		writer.writerow(csv_row)
 	except KeyError as e:
 		logging.error("Couldn't find field {} in results for {}!".format(e, isbn))
